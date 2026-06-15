@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微風與夜空 - 高中空氣品質研究專題</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: 融入吉卜力溫暖手繪風的字體 (使用 M PLUS Rounded 1c 或 Noto Sans TC) -->
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons for interactive elements -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'M PLUS Rounded 1c', 'Noto Sans TC', sans-serif;
+            scroll-behavior: smooth;
+        }
+        /* 自訂滾動條，符合吉卜力溫潤感 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #111827;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+        /* 吉卜力風格微風動畫 */
+        @keyframes drift {
+            0% { transform: translateX(0px) translateY(0px) rotate(0deg); }
+            50% { transform: translateX(10px) translateY(-5px) rotate(2deg); }
+            100% { transform: translateX(0px) translateY(0px) rotate(0deg); }
+        }
+        .ghibli-float {
+            animation: drift 6s ease-in-out infinite;
+        }
+        .ghibli-float-delayed {
+            animation: drift 8s ease-in-out infinite;
+            animation-delay: 2s;
+        }
+        /* 發光字體與柔焦效果 */
+        .glow-text {
+            text-shadow: 0 0 10px rgba(253, 224, 71, 0.6);
+        }
+        /* 手繪風框線與陰影 */
+        .hand-drawn-border {
+            border: 3px solid #374151;
+            box-shadow: 4px 4px 0px #374151;
+            border-radius: 16px;
+        }
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 6px 6px 0px #1e293b;
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen relative overflow-x-hidden">
+
+    <!-- 動態背景 Canvas (星空與發光粒子) -->
+    <canvas id="bgCanvas" class="fixed top-0 left-0 w-full h-full -z-10 pointer-events-none"></canvas>
+
+    <!-- 頂部導航列 -->
+    <header class="sticky top-0 z-50 backdrop-blur-md bg-slate-900/80 border-b border-slate-800 transition-all duration-300">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="#" class="flex items-center space-x-2">
+                <span class="text-2xl">🍃</span>
+                <span class="font-bold text-xl tracking-wider text-emerald-300">微風之谷專案</span>
+            </a>
+            <nav class="hidden md:flex space-x-8 text-sm font-medium">
+                <a href="#about" class="text-slate-300 hover:text-emerald-300 transition-colors">專題起源</a>
+                <a href="#science" class="text-slate-300 hover:text-emerald-300 transition-colors">科普看板</a>
+                <a href="#interactive" class="text-slate-300 hover:text-emerald-300 transition-colors">互動空氣</a>
+                <a href="#results" class="text-slate-300 hover:text-emerald-300 transition-colors">專案成果</a>
+            </nav>
+            <a href="#download" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-full text-xs font-bold tracking-wider transition-all duration-300 hover:scale-105 shadow-lg shadow-emerald-900/30 flex items-center space-x-1">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                <span>獲取執行檔</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Hero Section (首頁大視覺) -->
+    <section class="min-h-[90vh] flex flex-col justify-center items-center px-6 relative">
+        <!-- 裝飾用漂浮雲朵 (吉卜力風) -->
+        <div class="absolute top-20 left-10 opacity-20 ghibli-float pointer-events-none">
+            <svg width="200" height="100" viewBox="0 0 200 100" fill="currentColor" class="text-slate-400">
+                <path d="M 30 80 A 30 30 0 0 1 80 50 A 40 40 0 0 1 150 40 A 30 30 0 0 1 180 80 Z"/>
+            </svg>
+        </div>
+        <div class="absolute bottom-32 right-12 opacity-15 ghibli-float-delayed pointer-events-none">
+            <svg width="250" height="120" viewBox="0 0 250 120" fill="currentColor" class="text-slate-400">
+                <path d="M 40 90 A 35 35 0 0 1 90 55 A 50 50 0 0 1 180 45 A 35 35 0 0 1 220 90 Z"/>
+            </svg>
+        </div>
+
+        <div class="text-center max-w-3xl z-10">
+            <!-- 專題小標籤 -->
+            <div class="inline-block bg-emerald-950/80 border border-emerald-500/30 text-emerald-300 px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest mb-6 uppercase shadow-inner">
+                🎓 115學年度 高中生期末資訊專題
+            </div>
+            
+            <!-- 專題大標題 -->
+            <h1 class="text-4xl md:text-6xl font-bold mb-6 tracking-wide leading-tight text-slate-100">
+                微風、夜空與我們的<span class="text-emerald-300 glow-text block md:inline">空氣品質</span>
+            </h1>
+            
+            <!-- 專題副標題/引言 -->
+            <p class="text-slate-300 text-base md:text-lg mb-8 leading-relaxed max-w-2xl mx-auto font-light">
+                「在群星閃爍的夜空下，微風是否依然清澈？」這是一個結合感測器物聯網與吉卜力美術風格的空氣品質監測專案。我們試圖用溫暖的科技，重新連結人與自然的微弱呼吸。
+            </p>
+
+            <!-- 核心呼籲行動 (CTA) 區塊 -->
+            <div class="flex flex-col sm:flex-row justify-center items-center gap-4">
+                <a href="#interactive" class="w-full sm:w-auto px-8 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-bold rounded-xl transition-all duration-300 hover:scale-105 shadow-xl shadow-emerald-500/20 flex items-center justify-center space-x-2">
+                    <i data-lucide="sparkles" class="w-5 h-5"></i>
+                    <span>體驗模擬器</span>
+                </a>
+                <a href="#download" class="w-full sm:w-auto px-8 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 hover:border-slate-600 font-bold rounded-xl transition-all duration-300 hover:scale-105 flex items-center justify-center space-x-2">
+                    <i data-lucide="folder-git-2" class="w-5 h-5"></i>
+                    <span>專案執行檔</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- 滾動提示指標 -->
+        <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center opacity-70 animate-bounce">
+            <span class="text-xs text-slate-400 tracking-widest mb-2">向下探索</span>
+            <i data-lucide="chevron-down" class="w-5 h-5 text-emerald-400"></i>
+        </div>
+    </section>
+
+    <!-- 專題研究介紹板塊 -->
+    <section id="about" class="py-24 px-6 max-w-6xl mx-auto relative">
+        <div class="grid md:grid-cols-12 gap-12 items-center">
+            
+            <!-- 左側研究動機 -->
+            <div class="md:col-span-7 space-y-6">
+                <div class="flex items-center space-x-2 text-emerald-400">
+                    <span class="text-xl">🌟</span>
+                    <span class="text-sm font-bold tracking-widest uppercase">專題起源 / Research Motivation</span>
+                </div>
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-100 tracking-wide">
+                    當風吹過克拉斯特，<br>我們如何捕捉風的形狀？
+                </h2>
+                <div class="h-1 w-20 bg-emerald-500 rounded-full"></div>
+                
+                <p class="text-slate-300 leading-relaxed text-sm md:text-base">
+                    在忙碌的高中校園生活中，我們常抬頭仰望天空，卻很少意識到我們吸入的每一口空氣。隨著都市擴張與工業發展，細懸浮微粒（PM2.5）與各種氣體污染物正悄悄改變我們的世界，如同吉卜力動畫中被污染的腐海。
+                </p>
+                <p class="text-slate-300 leading-relaxed text-sm md:text-base">
+                    本專題旨在運用 Arduino 微控制器與高精度 Dust Sensor（塵埃感測器），打造一台「風之使者監測儀」，不僅能即時監控班級教室與校園角落的 PM2.5、二氧化碳與溫濕度，更透過這套溫馨的可視化介面，將冰冷的數據轉化為溫潤的視覺，提醒大家愛護環境。
+                </p>
+
+                <!-- 亮點小徽章 -->
+                <div class="grid grid-cols-2 gap-4 pt-4">
+                    <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                        <span class="text-2xl block mb-1">📟</span>
+                        <h4 class="font-bold text-slate-200">硬體物聯網</h4>
+                        <p class="text-xs text-slate-400 mt-1">使用 ESP32 與 3D 列印外殼自製空氣盒子。</p>
+                    </div>
+                    <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                        <span class="text-2xl block mb-1">💻</span>
+                        <h4 class="font-bold text-slate-200">即時可視化</h4>
+                        <p class="text-xs text-slate-400 mt-1">網頁端透過動畫，使隱形污染一目了然。</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右側插圖/卡片效果 -->
+            <div class="md:col-span-5 flex justify-center">
+                <div class="relative w-full max-w-sm hand-drawn-border bg-slate-800/80 p-6 space-y-6">
+                    <div class="absolute -top-4 -right-4 bg-yellow-400 text-slate-900 font-black text-xs px-3 py-1.5 rounded-lg transform rotate-6 shadow-md">
+                        NO.1 科展作品
+                    </div>
+                    
+                    <!-- 模擬吉卜力風插圖 (以 CSS SVG 組合) -->
+                    <div class="h-48 w-full bg-slate-900 rounded-lg overflow-hidden relative border border-slate-700 flex items-center justify-center">
+                        <div class="absolute top-2 right-2 text-emerald-400 text-xs flex items-center space-x-1">
+                            <span class="relative flex h-2 w-2">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            </span>
+                            <span>連線正常</span>
+                        </div>
+                        
+                        <!-- 簡約手繪插圖：風車與天空 -->
+                        <svg class="w-24 h-24 text-emerald-400/80 ghibli-float" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <!-- 風車底座 -->
+                            <path d="M45 90 L50 40 L55 90 Z" fill="currentColor" opacity="0.3" stroke="currentColor" stroke-width="2"/>
+                            <!-- 扇葉 -->
+                            <g transform="translate(50,40)">
+                                <animateTransform attributeName="transform" type="rotate" from="0 50 40" to="360 50 40" dur="8s" repeatCount="indefinite" />
+                                <circle cx="50" cy="40" r="5" fill="currentColor"/>
+                                <path d="M50 40 Q40 10 50 10 Q60 10 50 40 Z" fill="currentColor" opacity="0.7"/>
+                                <path d="M50 40 Q80 30 80 40 Q80 50 50 40 Z" fill="currentColor" opacity="0.7"/>
+                                <path d="M50 40 Q60 70 50 70 Q40 70 50 40 Z" fill="currentColor" opacity="0.7"/>
+                                <path d="M50 40 Q20 50 20 40 Q20 30 50 40 Z" fill="currentColor" opacity="0.7"/>
+                            </g>
+                        </svg>
+                        
+                        <!-- 手繪感的流風紋路 -->
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-transparent to-transparent pointer-events-none"></div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h3 class="font-bold text-lg text-slate-100 flex items-center space-x-2">
+                            <span>🌬️</span>
+                            <span>專案實體「風之盒子」</span>
+                        </h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            我們設計的微型空氣盒子。外殼靈感源自於《天空之城》的拉普達齒輪，兼顧空氣對流物理原理與美學，部署於校園各角落。
+                        </p>
+                    </div>
+
+                    <div class="pt-2 border-t border-slate-700 flex justify-between items-center text-xs text-slate-400">
+                        <span>指導老師：陳資訊 老師</span>
+                        <span>研究組員：王大同、李小明</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- 科普知識看板板塊 -->
+    <section id="science" class="py-20 bg-slate-950/60 border-y border-slate-800 px-6">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center max-w-2xl mx-auto mb-16 space-y-4">
+                <span class="text-3xl">📚</span>
+                <h2 class="text-3xl font-bold text-slate-100 tracking-wide">認識空氣中的「隱形訪客」</h2>
+                <p class="text-slate-400 text-sm">
+                    空氣是生命的泉源，但你真正了解每天吸入的微粒嗎？以下是我們專案深入探討的三大關鍵環境指標。
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- PM2.5 卡片 -->
+                <div class="bg-slate-900/80 p-6 rounded-2xl border border-slate-800 card-hover space-y-4">
+                    <div class="w-12 h-12 bg-rose-950/50 border border-rose-500/30 text-rose-400 rounded-xl flex items-center justify-center text-xl">
+                        🌫️
+                    </div>
+                    <h3 class="font-bold text-xl text-rose-300">細懸浮微粒 (PM2.5)</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        粒徑小於或等於 2.5 微米的細懸浮微粒。它能穿透肺泡，直接進入血管。我們通常能透過肉眼觀察空氣的「朦朧感」來察覺它。
+                    </p>
+                    <div class="text-xs text-rose-400/80 font-medium bg-rose-950/20 px-3 py-1.5 rounded-lg inline-block">
+                        安全限值：年平均 15 μg/m³ 以下
+                    </div>
+                </div>
+
+                <!-- CO2 卡片 -->
+                <div class="bg-slate-900/80 p-6 rounded-2xl border border-slate-800 card-hover space-y-4">
+                    <div class="w-12 h-12 bg-amber-950/50 border border-amber-500/30 text-amber-400 rounded-xl flex items-center justify-center text-xl">
+                        🥱
+                    </div>
+                    <h3 class="font-bold text-xl text-amber-300">二氧化碳 (CO₂)</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        教室門窗緊閉時，學生的專注力下降往往是因為二氧化碳濃度過高。我們的「風之盒子」會即時發出溫和的黃光，提醒同學開窗通風。
+                    </p>
+                    <div class="text-xs text-amber-400/80 font-medium bg-amber-950/20 px-3 py-1.5 rounded-lg inline-block">
+                        舒適限值：1000 ppm 以下
+                    </div>
+                </div>
+
+                <!-- TVOC 卡片 -->
+                <div class="bg-slate-900/80 p-6 rounded-2xl border border-slate-800 card-hover space-y-4">
+                    <div class="w-12 h-12 bg-cyan-950/50 border border-cyan-500/30 text-cyan-400 rounded-xl flex items-center justify-center text-xl">
+                        🧴
+                    </div>
+                    <h3 class="font-bold text-xl text-cyan-300">總揮發性有機物 (TVOC)</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        來自新桌椅、立可白、油漆等的化學氣味。長期處於高濃度 TVOC 環境中會引發暈眩。透過本專利，我們希望能更敏銳地揪出教室中的隱性過敏原。
+                    </p>
+                    <div class="text-xs text-cyan-400/80 font-medium bg-cyan-950/20 px-3 py-1.5 rounded-lg inline-block">
+                        健康限值：0.56 ppm 以下
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 互動式空氣品質模擬器 (最吸睛互動元件) -->
+    <section id="interactive" class="py-24 px-6 max-w-6xl mx-auto">
+        <div class="grid md:grid-cols-12 gap-12 items-center">
+            
+            <!-- 左側控制面板 -->
+            <div class="md:col-span-5 space-y-6 bg-slate-850/80 p-8 rounded-2xl border border-slate-800 shadow-xl relative overflow-hidden">
+                <div class="absolute -top-10 -left-10 w-40 h-40 bg-emerald-500/5 rounded-full blur-2xl"></div>
+                
+                <h3 class="text-2xl font-bold text-slate-100 flex items-center space-x-2">
+                    <span>🧙‍♂️</span>
+                    <span>魔女的空氣實驗坊</span>
+                </h3>
+                <p class="text-slate-400 text-xs leading-relaxed">
+                    請拖曳下方的滑桿來調整「空气質量指數 (AQI)」。當數值升高時，您可以觀察右側的夜空（以及整個網頁背景）發生什麼變化！
+                </p>
+
+                <!-- AQI 控制滑桿 -->
+                <div class="space-y-4 pt-4">
+                    <div class="flex justify-between items-center text-sm font-medium">
+                        <span class="text-slate-300">模擬 AQI 數值：</span>
+                        <span id="aqiValDisplay" class="text-2xl font-black text-emerald-400">50</span>
+                    </div>
+                    
+                    <input type="range" id="aqiSlider" min="10" max="250" value="50" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-400">
+                    
+                    <div class="flex justify-between text-xs text-slate-500">
+                        <span>10 (極佳)</span>
+                        <span>100 (普通)</span>
+                        <span>250 (危害)</span>
+                    </div>
+                </div>
+
+                <!-- 動態狀態卡片 -->
+                <div id="statusBox" class="p-4 bg-emerald-950/40 border border-emerald-500/30 rounded-xl transition-all duration-300">
+                    <div class="flex items-center space-x-3">
+                        <span id="statusEmoji" class="text-2xl">🍃</span>
+                        <div>
+                            <h4 id="statusTitle" class="font-bold text-emerald-300 text-sm">空氣非常純淨</h4>
+                            <p id="statusDesc" class="text-xs text-slate-400 mt-1">此時滿天星空，微風輕拂，螢火蟲快樂地發光，這是最適合在大自然露營的夜晚！</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-[10px] text-slate-500 text-center italic">
+                    *背景 Canvas 粒子與星空將隨數值即時演算與渲染
+                </div>
+            </div>
+
+            <!-- 右側即時可視化大螢幕 (吉卜力夜空預覽) -->
+            <div class="md:col-span-7">
+                <div class="relative w-full aspect-video rounded-3xl overflow-hidden border-4 border-slate-800 shadow-2xl bg-slate-950 flex flex-col justify-between p-6">
+                    <!-- 預覽專屬的動態背景 -->
+                    <canvas id="previewCanvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
+                    
+                    <!-- 卡片內部 UI 疊加 -->
+                    <div class="z-10 flex justify-between items-start">
+                        <div class="bg-slate-900/90 backdrop-blur px-3 py-1.5 rounded-xl border border-slate-700 text-xs flex items-center space-x-1.5">
+                            <span class="w-2.5 h-2.5 bg-red-500 rounded-full animate-ping"></span>
+                            <span class="text-slate-300 font-medium">即時環境投影</span>
+                        </div>
+                        <div class="text-right">
+                            <span id="previewAqiLabel" class="text-2xl font-black text-emerald-400 glow-text">AQI 50</span>
+                            <p class="text-[9px] text-slate-500">吉卜力微風渲染引擎 v1.2</p>
+                        </div>
+                    </div>
+
+                    <!-- 底部手繪山景與風車剪影 -->
+                    <div class="z-10 w-full relative h-20 pointer-events-none">
+                        <svg class="absolute bottom-0 w-full h-16 text-slate-900/90" preserveAspectRatio="none" viewBox="0 0 1440 120" fill="currentColor">
+                            <path d="M0,32L120,42.7C240,53,480,75,720,74.7C960,75,1200,53,1320,42.7L1440,32L1440,120L1320,120C1200,120,960,120,720,120C480,120,240,120,120,120L0,120Z"></path>
+                        </svg>
+                        <!-- 風車剪影 -->
+                        <div class="absolute bottom-2 left-12 text-slate-900">
+                            <svg class="w-12 h-12" viewBox="0 0 100 100" fill="currentColor">
+                                <path d="M45 90 L50 30 L55 90 Z"/>
+                                <circle cx="50" cy="30" r="3"/>
+                            </svg>
+                        </div>
+                        <div class="absolute bottom-1 right-20 text-slate-900 opacity-80">
+                            <svg class="w-8 h-8" viewBox="0 0 100 100" fill="currentColor">
+                                <path d="M45 90 L50 30 L55 90 Z"/>
+                            </svg>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- 專題成果與執行檔下載板塊 -->
+    <section id="results" class="py-24 bg-slate-950/40 border-t border-slate-800 px-6">
+        <div class="max-w-6xl mx-auto space-y-16">
+            
+            <div class="text-center max-w-2xl mx-auto space-y-4">
+                <span class="text-3xl">🏆</span>
+                <h2 class="text-3xl font-bold text-slate-100 tracking-wide">專案實踐與程式成果</h2>
+                <p class="text-slate-400 text-sm">
+                    我們將物理感測器的數據，透過 ESP32 開發板撰寫 C++ 程式，並打包成簡易好上手的桌面監控小軟體！
+                </p>
+            </div>
+
+            <!-- 開發流程時間軸 -->
+            <div class="grid md:grid-cols-4 gap-6">
+                <div class="bg-slate-900/60 p-6 rounded-2xl border border-slate-800/80 relative">
+                    <div class="absolute -top-3 left-6 w-8 h-8 bg-emerald-500 text-slate-900 font-bold rounded-full flex items-center justify-center text-sm shadow-md">1</div>
+                    <h4 class="font-bold text-slate-100 mt-2 mb-1.5">組裝感測器</h4>
+                    <p class="text-xs text-slate-400 leading-relaxed">焊接 ESP32 開發板與 PM2.5 雷射粉塵感測器，確保訊號讀取無誤。</p>
+                </div>
+                <div class="bg-slate-900/60 p-6 rounded-2xl border border-slate-800/80 relative">
+                    <div class="absolute -top-3 left-6 w-8 h-8 bg-emerald-500 text-slate-900 font-bold rounded-full flex items-center justify-center text-sm shadow-md">2</div>
+                    <h4 class="font-bold text-slate-100 mt-2 mb-1.5">3D 模型外殼設計</h4>
+                    <p class="text-xs text-slate-400 leading-relaxed">使用 Fusion 360 繪製微型小風車與復古房屋造型，並進行 PLA 列印。</p>
+                </div>
+                <div class="bg-slate-900/60 p-6 rounded-2xl border border-slate-800/80 relative">
+                    <div class="absolute -top-3 left-6 w-8 h-8 bg-emerald-500 text-slate-900 font-bold rounded-full flex items-center justify-center text-sm shadow-md">3</div>
+                    <h4 class="font-bold text-slate-100 mt-2 mb-1.5">伺服器雲端介接</h4>
+                    <p class="text-xs text-slate-400 leading-relaxed">利用 MQTT 協定將監控數據回傳至雲端資料庫，實現跨平台資料同步。</p>
+                </div>
+                <div class="bg-slate-900/60 p-6 rounded-2xl border border-slate-800/80 relative">
+                    <div class="absolute -top-3 left-6 w-8 h-8 bg-emerald-500 text-slate-900 font-bold rounded-full flex items-center justify-center text-sm shadow-md">4</div>
+                    <h4 class="font-bold text-slate-100 mt-2 mb-1.5">跨平台監控軟體</h4>
+                    <p class="text-xs text-slate-400 leading-relaxed">使用 Electron 技術打包成精美的桌面發光小元件（專案執行檔）。</p>
+                </div>
+            </div>
+
+            <!-- 下載執行檔特色區塊 -->
+            <div id="download" class="max-w-4xl mx-auto bg-gradient-to-br from-emerald-950/60 to-slate-900 border-2 border-emerald-500/30 rounded-3xl p-8 md:p-12 relative overflow-hidden shadow-2xl">
+                <!-- 背景光圈 -->
+                <div class="absolute -bottom-20 -right-20 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl"></div>
+                
+                <div class="relative z-10 grid md:grid-cols-12 gap-8 items-center">
+                    <div class="md:col-span-8 space-y-4">
+                        <span class="bg-emerald-500/20 text-emerald-300 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">桌面小工具下載</span>
+                        <h3 class="text-2xl md:text-3xl font-bold text-slate-100 leading-tight">
+                            將「微風之丘監測站」<br class="hidden md:block">直接帶到你的桌面上吧！
+                        </h3>
+                        <p class="text-slate-300 text-sm leading-relaxed">
+                            我們特別開發了一款輕量級的桌面監控程式，能在電腦右下角生成一個會隨您在地空氣 AQI 改變背景顏色的「發光發熱吉卜力風精靈小房子」。隨時提醒您何時該打開窗戶通風！
+                        </p>
+                        
+                        <div class="flex flex-wrap gap-4 text-xs text-slate-400">
+                            <span class="flex items-center space-x-1">
+                                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
+                                <span>綠色安全無廣告</span>
+                            </span>
+                            <span class="flex items-center space-x-1">
+                                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
+                                <span>免安裝綠色版 (.zip)</span>
+                            </span>
+                            <span class="flex items-center space-x-1">
+                                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
+                                <span>支援 Win10/11 & macOS</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="md:col-span-4 flex flex-col justify-center items-stretch space-y-4">
+                        <!-- 核心大按鈕 -->
+                        <button onclick="triggerDownload()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-extrabold py-4 px-6 rounded-2xl transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] shadow-lg shadow-emerald-500/20 flex flex-col items-center justify-center space-y-1">
+                            <div class="flex items-center space-x-2 text-lg">
+                                <i data-lucide="download-cloud" class="w-6 h-6"></i>
+                                <span>下載專案執行檔</span>
+                            </div>
+                            <span class="text-[10px] opacity-80 font-normal">Windows v1.2.0 (52.4 MB)</span>
+                        </button>
+
+                        <button onclick="triggerMacDownload()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 hover:border-slate-600 font-bold py-2.5 px-4 rounded-xl transition-all duration-300 text-xs flex items-center justify-center space-x-1.5">
+                            <i data-lucide="apple" class="w-4 h-4"></i>
+                            <span>下載 Mac 系統版本</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- 下載互動彈出框 (取代 alert) -->
+    <div id="downloadModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm hidden transition-all duration-300 opacity-0">
+        <div class="bg-slate-900 border border-slate-800 p-8 rounded-2xl max-w-sm w-full mx-4 shadow-2xl text-center space-y-6">
+            <div class="w-16 h-16 bg-emerald-950/50 text-emerald-400 rounded-full flex items-center justify-center text-3xl mx-auto animate-pulse">
+                🌱
+            </div>
+            <div class="space-y-2">
+                <h4 class="text-xl font-bold text-slate-100">正在下載專題檔案...</h4>
+                <p id="modalDownloadText" class="text-xs text-slate-400 leading-relaxed">
+                    請等候數秒，魔女的信使正將「微風之丘監測站_Windows.zip」桌面發光小精靈打包寄送給您！
+                </p>
+            </div>
+            <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                <div class="bg-emerald-400 h-full w-0 animate-[loading_3s_ease-out_forwards]"></div>
+            </div>
+            <button onclick="closeModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium py-2 rounded-xl transition-colors">
+                好，我知曉了
+            </button>
+        </div>
+    </div>
+
+    <!-- 頁尾 -->
+    <footer class="bg-slate-950 py-12 border-t border-slate-900 text-center text-xs text-slate-500 space-y-4 px-6">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-2">
+                <span class="text-lg">🍃</span>
+                <span class="font-bold text-slate-400 tracking-wider">吉卜力風高中期末專案團隊 ── 空氣品質研究小組</span>
+            </div>
+            <div class="flex space-x-6 text-slate-400">
+                <a href="#about" class="hover:text-emerald-400 transition-colors">專題起源</a>
+                <a href="#science" class="hover:text-emerald-400 transition-colors">科普看板</a>
+                <a href="#interactive" class="hover:text-emerald-400 transition-colors">模擬調校</a>
+            </div>
+        </div>
+        <div class="pt-6 border-t border-slate-900/60 max-w-6xl mx-auto">
+            <p>© 115學年度 高中期末專題 榮譽呈現。版權所有，本作品採用開源 MIT 協議發布。</p>
+            <p class="mt-1 text-[10px]">Made with 💖, HTML/CSS/Canvas & Tailwind.</p>
+        </div>
+    </footer>
+
+    <!-- JS 腳本 -->
+    <script>
+        // 初始化 Lucide 圖標
+        lucide.createIcons();
+
+        // ---------------- Canvas 動態背景設定 ----------------
+        const bgCanvas = document.getElementById('bgCanvas');
+        const bgCtx = bgCanvas.getContext('2d');
+        const previewCanvas = document.getElementById('previewCanvas');
+        const previewCtx = previewCanvas.getContext('2d');
+
+        // 控制參數
+        let aqiValue = 50; // 預設普通偏健康
+        let stars = [];
+        let particles = []; // 發光孢子/螢火蟲
+        let previewStars = [];
+        let previewParticles = [];
+
+        // 調整大小
+        function resizeCanvas() {
+            bgCanvas.width = window.innerWidth;
+            bgCanvas.height = window.innerHeight;
+            
+            // 預覽視窗需要對齊父容器
+            const previewContainer = previewCanvas.parentElement;
+            previewCanvas.width = previewContainer.clientWidth;
+            previewCanvas.height = previewContainer.clientHeight;
+
+            initStars();
+        }
+
+        // 初始化繁星與螢火蟲
+        function initStars() {
+            // 背景星空
+            stars = [];
+            for (let i = 0; i < 150; i++) {
+                stars.push({
+                    x: Math.random() * bgCanvas.width,
+                    y: Math.random() * bgCanvas.height * 0.7, // 集中在上半部
+                    size: Math.random() * 1.5,
+                    opacity: Math.random(),
+                    speed: 0.005 + Math.random() * 0.01
+                });
+            }
+
+            // 背景螢火蟲/發光粒子
+            particles = [];
+            for (let i = 0; i < 40; i++) {
+                particles.push({
+                    x: Math.random() * bgCanvas.width,
+                    y: Math.random() * bgCanvas.height,
+                    size: 1 + Math.random() * 3,
+                    opacity: Math.random(),
+                    speedX: (Math.random() - 0.5) * 0.5,
+                    speedY: (Math.random() - 0.5) * 0.3 - 0.2, // 緩慢上升
+                    hue: 120 // 綠色
+                });
+            }
+
+            // 預覽視窗星星
+            previewStars = [];
+            for (let i = 0; i < 50; i++) {
+                previewStars.push({
+                    x: Math.random() * previewCanvas.width,
+                    y: Math.random() * previewCanvas.height * 0.7,
+                    size: Math.random() * 1.2,
+                    opacity: Math.random(),
+                    speed: 0.01 + Math.random() * 0.02
+                });
+            }
+
+            // 預覽視窗螢火蟲
+            previewParticles = [];
+            for (let i = 0; i < 15; i++) {
+                previewParticles.push({
+                    x: Math.random() * previewCanvas.width,
+                    y: Math.random() * previewCanvas.height,
+                    size: 1 + Math.random() * 2,
+                    opacity: Math.random(),
+                    speedX: (Math.random() - 0.5) * 0.4,
+                    speedY: (Math.random() - 0.5) * 0.3 - 0.2,
+                    hue: 120
+                });
+            }
+        }
+
+        // 取得當前 AQI 特徵（決定顏色、星星數、螢火蟲行為）
+        function getAqiFeature(aqi) {
+            let color, text, emoji, desc, starCount, haze, particleHue, particleCount;
+            if (aqi <= 50) {
+                // 非常優秀
+                color = "text-emerald-400";
+                text = "空氣非常純淨";
+                emoji = "🍃";
+                desc = "此時滿天星空，微風輕拂，螢火蟲快樂地發光，這是最適合在大自然露營的夜晚！";
+                starCount = 150;
+                haze = 0; // 沒有霧霾
+                particleHue = 120; // 翠綠色發光
+                particleCount = 40;
+            } else if (aqi <= 100) {
+                // 普通
+                color = "text-yellow-400";
+                text = "空氣品質普通";
+                emoji = "🌙";
+                desc = "有些許的微小懸浮粒子。星空依然可見，但能見度微微下降，螢火蟲的光芒顯得略有朦朧。";
+                starCount = 80;
+                haze = 0.2; // 輕微霧霾
+                particleHue = 60; // 偏黃綠色
+                particleCount = 25;
+            } else if (aqi <= 150) {
+                // 敏感不良
+                color = "text-orange-400";
+                text = "對敏感族群不健康";
+                emoji = "🌾";
+                desc = "空氣中開始累積塵埃。星星變得稀疏而微弱，空氣變得沉重，螢火蟲開始躲起來了。";
+                starCount = 40;
+                haze = 0.4;
+                particleHue = 35; // 橘黃色
+                particleCount = 15;
+            } else {
+                // 嚴重污染
+                color = "text-rose-500";
+                text = "嚴重雾霾汙染";
+                emoji = "🌫️";
+                desc = "糟糕！空氣中滿是懸浮粉塵。星光完全被灰茫茫的霧霾遮蔽，大自然蒙上了憂鬱的灰色。";
+                starCount = 5;
+                haze = 0.75; // 濃重霧霾
+                particleHue = 0; // 紅灰色微光
+                particleCount = 3;
+            }
+            return { color, text, emoji, desc, starCount, haze, particleHue, particleCount };
+        }
+
+        // 渲染主迴圈
+        function animate() {
+            // 讀取當前滑桿屬性
+            const feat = getAqiFeature(aqiValue);
+
+            // --- 渲染大背景 ---
+            // 1. 底色與霧霾混合
+            bgCtx.fillStyle = '#0f172a'; // 基本暗藍色
+            bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+            
+            // 霧霾層 (灰色/暗紅灰色)
+            if (feat.haze > 0) {
+                bgCtx.fillStyle = `rgba(100, 116, 139, ${feat.haze * 0.45})`;
+                bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+            }
+
+            // 2. 渲染星空 (星空多寡依據 AQI 決定)
+            bgCtx.fillStyle = '#ffffff';
+            const bgStarLimit = Math.min(stars.length, feat.starCount);
+            for (let i = 0; i < bgStarLimit; i++) {
+                const s = stars[i];
+                s.opacity += s.speed;
+                if (s.opacity > 1 || s.opacity < 0) s.speed = -s.speed;
+                
+                bgCtx.globalAlpha = Math.max(0, s.opacity * (1 - feat.haze * 1.2)); // 霧霾越濃星星越暗
+                bgCtx.beginPath();
+                bgCtx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+                bgCtx.fill();
+            }
+            bgCtx.globalAlpha = 1.0;
+
+            // 3. 渲染發光螢火蟲
+            const bgParticleLimit = Math.min(particles.length, feat.particleCount);
+            for (let i = 0; i < bgParticleLimit; i++) {
+                const p = particles[i];
+                p.x += p.speedX;
+                p.y += p.speedY;
+
+                // 飄出邊界重置
+                if (p.x < 0) p.x = bgCanvas.width;
+                if (p.x > bgCanvas.width) p.x = 0;
+                if (p.y < 0) p.y = bgCanvas.height;
+                if (p.y > bgCanvas.height) p.y = bgCanvas.height;
+
+                // 隨機閃爍
+                p.opacity += (Math.random() - 0.5) * 0.1;
+                p.opacity = Math.max(0.1, Math.min(1, p.opacity));
+
+                bgCtx.beginPath();
+                const glowGradient = bgCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 6);
+                glowGradient.addColorStop(0, `hsla(${feat.particleHue}, 100%, 70%, ${p.opacity * (1 - feat.haze * 0.8)})`);
+                glowGradient.addColorStop(1, `hsla(${feat.particleHue}, 100%, 70%, 0)`);
+                bgCtx.fillStyle = glowGradient;
+                bgCtx.arc(p.x, p.y, p.size * 6, 0, Math.PI * 2);
+                bgCtx.fill();
+            }
+
+
+            // --- 渲染預覽視窗 (右側精緻小視窗) ---
+            // 1. 預覽基本深邃夜空
+            const pW = previewCanvas.width;
+            const pH = previewCanvas.height;
+            
+            // 天空漸層
+            let skyGrad = previewCtx.createLinearGradient(0, 0, 0, pH);
+            skyGrad.addColorStop(0, '#090d16');
+            skyGrad.addColorStop(1, '#111827');
+            previewCtx.fillStyle = skyGrad;
+            previewCtx.fillRect(0, 0, pW, pH);
+
+            // 霧霾覆蓋
+            if (feat.haze > 0) {
+                previewCtx.fillStyle = `rgba(112, 128, 144, ${feat.haze * 0.6})`;
+                previewCtx.fillRect(0, 0, pW, pH);
+            }
+
+            // 2. 預覽星星
+            previewCtx.fillStyle = '#ffffff';
+            const previewStarLimit = Math.min(previewStars.length, Math.ceil(feat.starCount / 3));
+            for (let i = 0; i < previewStarLimit; i++) {
+                const s = previewStars[i];
+                s.opacity += s.speed;
+                if (s.opacity > 1 || s.opacity < 0) s.speed = -s.speed;
+
+                previewCtx.globalAlpha = Math.max(0, s.opacity * (1 - feat.haze * 1.3));
+                previewCtx.beginPath();
+                previewCtx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+                previewCtx.fill();
+            }
+            previewCtx.globalAlpha = 1.0;
+
+            // 3. 預覽螢火蟲
+            const previewParticleLimit = Math.min(previewParticles.length, Math.ceil(feat.particleCount / 2));
+            for (let i = 0; i < previewParticleLimit; i++) {
+                const p = previewParticles[i];
+                p.x += p.speedX;
+                p.y += p.speedY;
+
+                if (p.x < 0) p.x = pW;
+                if (p.x > pW) p.x = 0;
+                if (p.y < 0) p.y = pH;
+                if (p.y > pH) p.y = pH;
+
+                p.opacity += (Math.random() - 0.5) * 0.08;
+                p.opacity = Math.max(0.1, Math.min(0.9, p.opacity));
+
+                previewCtx.beginPath();
+                const glowGradient = previewCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 8);
+                glowGradient.addColorStop(0, `hsla(${feat.particleHue}, 100%, 75%, ${p.opacity * (1 - feat.haze * 0.9)})`);
+                glowGradient.addColorStop(1, `hsla(${feat.particleHue}, 100%, 75%, 0)`);
+                previewCtx.fillStyle = glowGradient;
+                previewCtx.arc(p.x, p.y, p.size * 8, 0, Math.PI * 2);
+                previewCtx.fill();
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        // ----------------- 滑桿連動事件 -----------------
+        const aqiSlider = document.getElementById('aqiSlider');
+        const aqiValDisplay = document.getElementById('aqiValDisplay');
+        const previewAqiLabel = document.getElementById('previewAqiLabel');
+        
+        const statusBox = document.getElementById('statusBox');
+        const statusEmoji = document.getElementById('statusEmoji');
+        const statusTitle = document.getElementById('statusTitle');
+        const statusDesc = document.getElementById('statusDesc');
+
+        aqiSlider.addEventListener('input', (e) => {
+            aqiValue = parseInt(e.target.value);
+            
+            // 更新文字與標記
+            aqiValDisplay.innerText = aqiValue;
+            previewAqiLabel.innerText = `AQI ${aqiValue}`;
+            
+            // 取得對應狀態特徵
+            const feat = getAqiFeature(aqiValue);
+            
+            // 改變文字與色彩類別
+            aqiValDisplay.className = `text-2xl font-black ${feat.color} glow-text transition-all duration-300`;
+            previewAqiLabel.className = `text-2xl font-black ${feat.color} glow-text transition-all duration-300`;
+            
+            statusEmoji.innerText = feat.emoji;
+            statusTitle.innerText = feat.text;
+            statusDesc.innerText = feat.desc;
+
+            // 調整狀態框的邊框與底色
+            statusBox.className = `p-4 border rounded-xl transition-all duration-300 bg-slate-900/60 ${feat.color.replace('text-', 'border-').split(' ')[0]}/30`;
+            statusTitle.className = `font-bold text-sm ${feat.color}`;
+        });
+
+
+        // ------------------ 彈出視窗模擬 ------------------
+        const downloadModal = document.getElementById('downloadModal');
+        const modalDownloadText = document.getElementById('modalDownloadText');
+
+        function triggerDownload() {
+            modalDownloadText.innerText = '請等候數秒，魔女的信使正將「微風之丘監測站_Windows.zip」桌面發光小精靈打包寄送給您！';
+            downloadModal.classList.remove('hidden');
+            setTimeout(() => {
+                downloadModal.classList.remove('opacity-0');
+            }, 50);
+        }
+
+        function triggerMacDownload() {
+            modalDownloadText.innerText = '請等候數秒，魔女的信使正將「微風之丘監測站_macOS.zip」桌面發光小精靈打包寄送給您！';
+            downloadModal.classList.remove('hidden');
+            setTimeout(() => {
+                downloadModal.classList.remove('opacity-0');
+            }, 50);
+        }
+
+        function closeModal() {
+            downloadModal.classList.add('opacity-0');
+            setTimeout(() => {
+                downloadModal.classList.add('hidden');
+            }, 300);
+        }
+
+        // 監聽視窗變化與載入
+        window.onload = function() {
+            resizeCanvas();
+            animate();
+        };
+
+        window.addEventListener('resize', resizeCanvas);
+    </script>
+</body>
+</html>
